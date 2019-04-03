@@ -39,7 +39,7 @@ We will use the R package “qqman” to make Manhattan plots and qq-plots. The 
 d <- read.table('gwa.assoc.fisher', head=T)
 manhattan(d)
 ```
-![manhattan.png][manhattan.png]
+![manhattan.png](manhattan.png)
 
 *3) Are there other variants close to the most significant variant that are also associated with the disease?*
 
@@ -55,7 +55,7 @@ qq(d$P)
 The inflation factor (𝝺) can be calculated as the median of the Chi-squared statistics computed divided by the median of the Chi-squared distribution under the null. Given a p-value (p) the corresponding Chi-squared quantile can be calculated as:
 
 Yes, there seems to be a general inflation
-![qq.png][qq.png]
+![qq.png](qq.png)
 
 ### Genomic Control.
 The inflation factor, 𝝺 , can be calculated as the median chi-square value divided by 0.456. Given a p-value, p, the corresponding Chi-square can be calculated as:
@@ -94,7 +94,7 @@ To do genomic control (to adjust for inflated test statistic) you divide the chi
   CHR        SNP        BP A1     F_A    F_U A2         P      OR        Q      Qcor         Pcor
 1  11  rs2513514  75922141  A 0.52130 0.1585  G 6.189e-07 5.77900 24.85246      19.04403 1.277367e-05
 ```
-![qqcor.png][qqcor.png]
+![qqcor.png](qqcor.png)
 
 ### PCA
 It is best to perform the PCA on a LD-pruned set of SNPs:
@@ -109,7 +109,7 @@ This calculates the eigenvalues and the eigenvectors, and stores them in two fil
 
 *7) Load gwa.eigenvec into R and make a plot with the first PC on the x-axis and the second PC on the y-axis. Does it look like there is population structure in the data? How many populations?*
 
-![pca.png][pca.png]
+![pca.png](pca.png)
 
 Two populations!
 
@@ -135,7 +135,7 @@ The resulting file “plink.assoc.logistic” contains p-values for both the SNP
 
 *9) Create Manhattan plot and QQ-plot for the new results. Does the QQ-plot look better?*
 
-![qqpca.png][qqpca.png]
+![qqpca.png](qqpca.png)
 
 *10) What is the inflation factor now?*
 
