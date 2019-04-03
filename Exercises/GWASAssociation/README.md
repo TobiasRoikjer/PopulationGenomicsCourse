@@ -22,7 +22,16 @@ plink --bfile GWAS_test --fisher --out GWAS_test
 ```
 *1) Take a look at the output file “gwa.assoc.fisher”. What is the p-value and location of the most significant variant?*
 
+```
+  CHR        SNP        BP A1     F_A    F_U A2         P      OR
+1  11  rs2513514  75922141  A 0.52130 0.1585  G 6.189e-07 5.77900
+```
+
 *2) Is the most significant variant significant if you do Bonferroni correction?*
+
+Assume a significance level of 5%. We have 119615 SNPs, this makes the alpha = 4.180078e-07.
+
+The P value is 6.189e-07, which is *not* significant.
 
 ### Make plots
 We will use the R package “qqman” to make Manhattan plots and qq-plots. The package is available in CRAN so it can be installed using the “install.packages” command. You can read in the association results and make a Manhattan plot by typing:
@@ -30,8 +39,11 @@ We will use the R package “qqman” to make Manhattan plots and qq-plots. The 
 d <- read.table('gwa.assoc.fisher', head=T)
 manhattan(d)
 ```
+![manhattan.png][manhattan.png]
 
 *3) Are there other variants close to the most significant variant that are also associated with the disease?*
+
+Yes there are 2 others.
 
 To make a QQ-plot you should use the “qq” function:
 ```
@@ -41,16 +53,48 @@ qq(d$P)
 
 ### Genomic Control.T
 The inflation factor (𝝺) can be calculated as the median of the Chi-squared statistics computed divided by the median of the Chi-squared distribution under the null. Given a p-value (p) the corresponding Chi-squared quantile can be calculated as:
+
+Yes, there seems to be a general inflation
+![qq.png][qq.png]
+
+### Genomic Control.
+The inflation factor, 𝝺 , can be calculated as the median chi-square value divided by 0.456. Given a p-value, p, the corresponding Chi-square can be calculated as:
 ```
 qchisq(p, df=1, lower.tail = F)
 ```
+
+```
+ median(qchisq(df$P, df=1, lower.tail = F))
+[1] 0.5955004
+```
+
 *5) What is the inflation factor?*
 
 To do genomic control (to adjust for inflated test statistic) you divide the Chi-squared values by the inflation factor. To turn a Chi-squared quantile (q) into a p-value you use the “pchisq” function:
 ```
-pchisq(q, df=1, lower.tail = F)
+0.595 / 0.456 = 1.305
 ```
+
+To do genomic control (to adjust for inflated test statistic) you divide the chi-square values with the inflation factor. To turn a chi-square value, q, into a p-value you use the “pchisq” function:
+
+```
+ pchisq(q, df=1, lower.tail = F)
+```
+
+```
+ df <- df %>%
+   mutate(Q = qchisq(P, df=1, lower.tail = F)) %>%
+   mutate(Qcor = Q / 1.305) %>%
+   mutate(Pcor = pchisq(Qcor, df=1, lower.tail=F))
+```
+
 *6) What is the p-value of the most significant marker after genomic control?*
+
+```
+  CHR        SNP        BP A1     F_A    F_U A2         P      OR        Q      Qcor         Pcor
+1  11  rs2513514  75922141  A 0.52130 0.1585  G 6.189e-07 5.77900 24.85246      19.04403 1.277367e-05
+```
+![qqcor.png][qqcor.png]
 
 ### PCA
 It is best to perform the PCA on a LD-pruned set of SNPs:
@@ -65,17 +109,41 @@ This calculates the eigenvalues and the eigenvectors, and stores them in two fil
 
 *7) Load gwa.eigenvec into R and make a plot with the first PC on the x-axis and the second PC on the y-axis. Does it look like there is population structure in the data? How many populations?*
 
+![pca.png][pca.png]
+
+Two populations!
+
 The eigenvalues divided by the number of individuals should correspond approximately to the variance explained by the eigenvectors.
  
 *8) How large a percentage of the variance does the first PC approximately explain?*
 
+```
+ df3[1,] / nrow(df2)
+[1] 0.01913159
+```
+
+So 1.9 % of the variance. (1.2 % for the next)
+
 ### Adjusting for PCs
 We can use a logistic regression test to perform an association test while correcting for covariates. To include the first PC as a covariate type:
+
 ```
 plink --bfile gwa --logistic --covar gwa.eigenvec --covar-number 1
 ```
+
 The resulting file “plink.assoc.logistic” contains p-values for both the SNPs and the covariates. To get the p-values for the SNPs should look at the rows with the value “ADD” in the “TEST” column. (It is possible to include more PCs. To include the first x covariates you can write “--covar-number 1-x”.)
 
 *9) Create Manhattan plot and QQ-plot for the new results. Does the QQ-plot look better?*
 
+![qqpca.png][qqpca.png]
+
 *10) What is the inflation factor now?*
+
+```
+ median(qchisq((df4 %>% filter(TEST=="ADD"))$P, df=1, lower.tail = F))
+[1] 0.5312067
+```
+
+```
+0.531 / 0.456 = 1.164
+```
